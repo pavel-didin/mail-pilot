@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { MouseEvent } from "react"
 
 import { PriorityBadge } from "@/components/letter-pane"
 import { formatClock, formatRelative } from "@/lib/format"
@@ -79,12 +80,19 @@ export function FeedMessage({
   active: boolean
   onSelect: () => void
 }) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    onSelect()
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      event.preventDefault()
+    }
+  }
+
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <Link
+      href={`/letter/${letter.id}`}
+      onClick={handleClick}
       className={cn(
-        "w-full rounded-2xl px-3.5 py-3 text-left transition-colors",
+        "block w-full rounded-2xl px-3.5 py-3 text-left transition-colors",
         active
           ? "bg-secondary ring-1 ring-foreground/10"
           : "hover:bg-secondary/60",
@@ -114,6 +122,9 @@ export function FeedMessage({
           <p className="mt-1 text-[13px] leading-5 text-foreground/90">
             {letter.summary}
           </p>
+          <p className="mt-2 text-[11px] font-medium text-primary lg:hidden">
+            Open letter
+          </p>
           {!letter.notified ? (
             <p className="mt-1 text-[11px] text-muted-foreground">
               Filed quietly — below your notify bar.
@@ -121,6 +132,6 @@ export function FeedMessage({
           ) : null}
         </div>
       </div>
-    </button>
+    </Link>
   )
 }

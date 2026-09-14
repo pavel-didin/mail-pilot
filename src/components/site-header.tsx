@@ -20,7 +20,7 @@ export function SiteHeader({
   busy?: boolean
 }) {
   return (
-    <header className="flex flex-wrap items-center gap-3 border-b border-border/70 bg-[color-mix(in_oklch,var(--background),var(--card)_55%)] px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-40 flex flex-wrap items-center gap-3 border-b border-border/70 bg-[color-mix(in_oklch,var(--background),var(--card)_82%)] px-4 py-3 backdrop-blur-md sm:px-6">
       <Link href="/" className="flex items-center gap-2.5">
         <Mark />
         <div className="leading-tight">

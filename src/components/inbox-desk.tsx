@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { InboxIcon, Loader2Icon, RadioIcon } from "lucide-react"
 
@@ -12,12 +13,6 @@ import { TelegramPhone } from "@/components/feed-message"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { InboxSnapshot, Letter, Prefs } from "@/lib/types"
@@ -41,9 +36,9 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
   const [selectedId, setSelectedId] = useState<string | null>(
     initial.letters[0]?.id ?? null
   )
-  const [sheetOpen, setSheetOpen] = useState(false)
   const [arriving, setArriving] = useState(false)
   const [channel, setChannel] = useState("desk")
+  const router = useRouter()
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -82,7 +77,9 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
             label: "Open",
             onClick: () => {
               setSelectedId(payload.letter!.id)
-              setSheetOpen(true)
+              if (window.matchMedia("(max-width: 1023px)").matches) {
+                router.push(`/letter/${payload.letter!.id}`)
+              }
             },
           },
         })
@@ -93,7 +90,7 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
     } finally {
       setArriving(false)
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!watching) return
@@ -148,10 +145,9 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
     setData(payload.snapshot)
   }
 
-  function selectLetter(id: string, mobileSheet = false) {
+  function selectLetter(id: string) {
     setSelectedId(id)
     void markRead(id)
-    if (mobileSheet) setSheetOpen(true)
   }
 
   async function resetDemo() {
@@ -185,84 +181,36 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
       ) : null}
 
       <div className="mx-auto grid w-full max-w-[1400px] flex-1 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_minmax(320px,420px)]">
-        <aside className="border-b border-border/70 p-4 lg:border-r lg:border-b-0">
-          <p className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            Why this exists
-          </p>
-          <p className="mt-2 font-heading text-2xl leading-tight">
-            Check a knock, not an inbox.
-          </p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Clerk reads new mail, throws away noise, and pings this desk — or
-            Telegram — with a summary and one button to the letter.
-          </p>
-
-          <div className="mt-5 grid gap-2">
-            {(
-              [
-                ["knock", `Knocks · ${counts.knock}`],
-                ["all", `Everything · ${counts.all}`],
-                ["quiet", `Filed quiet · ${counts.quiet}`],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFilter(value)}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-left text-sm",
-                  filter === value ? "bg-secondary" : "hover:bg-secondary/50"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <Separator className="my-4" />
-
-          <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            What Clerk may knock about
-          </p>
-          <div className="grid gap-3 text-sm">
-            <PrefRow
-              label="Urgent"
-              hint="Travel, money, security, today"
-              checked={data.prefs.notifyUrgent}
-              onChange={(checked) => void patchPrefs({ notifyUrgent: checked })}
-            />
-            <PrefRow
-              label="Needs you"
-              hint="Reviews, meetings, asks"
-              checked={data.prefs.notifyAction}
-              onChange={(checked) => void patchPrefs({ notifyAction: checked })}
-            />
-            <PrefRow
-              label="FYI"
-              hint="Receipts, lab notes"
-              checked={data.prefs.notifyFyi}
-              onChange={(checked) => void patchPrefs({ notifyFyi: checked })}
-            />
-            <PrefRow
-              label="Quiet / noise"
-              hint="Digests, LinkedIn, bots"
-              checked={data.prefs.notifyNoise}
-              onChange={(checked) => void patchPrefs({ notifyNoise: checked })}
-            />
-            <PrefRow
-              label="Telegram copy"
-              hint={
-                data.telegramConfigured
-                  ? "Live bot token detected"
-                  : "Simulated in this demo"
-              }
-              checked={data.prefs.telegramEnabled}
-              onChange={(checked) => void patchPrefs({ telegramEnabled: checked })}
+        <aside className="order-2 border-t border-border/70 p-4 lg:order-1 lg:border-r lg:border-t-0">
+          <details className="lg:hidden">
+            <summary className="cursor-pointer list-none font-heading text-lg [&::-webkit-details-marker]:hidden">
+              Filters & Clerk
+              <span className="ml-2 text-sm font-sans text-muted-foreground">
+                {counts.knock} knocks
+              </span>
+            </summary>
+            <div className="pt-4">
+              <AsideCopy
+                data={data}
+                filter={filter}
+                counts={counts}
+                onFilter={setFilter}
+                onPref={patchPrefs}
+              />
+            </div>
+          </details>
+          <div className="hidden lg:block">
+            <AsideCopy
+              data={data}
+              filter={filter}
+              counts={counts}
+              onFilter={setFilter}
+              onPref={patchPrefs}
             />
           </div>
         </aside>
 
-        <section className="flex min-h-[70vh] flex-col border-b border-border/70 lg:border-r lg:border-b-0">
+        <section className="order-1 flex min-h-[70vh] flex-col border-b border-border/70 lg:order-2 lg:border-r lg:border-b-0">
           <Tabs value={channel} onValueChange={setChannel} className="flex min-h-0 flex-1">
             <div className="flex items-center gap-3 px-4 pt-3">
               <TabsList>
@@ -318,9 +266,7 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
                       key={letter.id}
                       letter={letter}
                       active={letter.id === selectedId}
-                      onSelect={() =>
-                        selectLetter(letter.id, window.matchMedia("(max-width: 1023px)").matches)
-                      }
+                      onSelect={() => selectLetter(letter.id)}
                     />
                   ))
                 )}
@@ -336,21 +282,10 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
           </Tabs>
         </section>
 
-        <section className="hidden min-h-[70vh] lg:block">
+        <section className="order-3 hidden min-h-[70vh] lg:block">
           <LetterPane letter={selected} />
         </section>
       </div>
-
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="h-[88vh] sm:max-w-none">
-          <SheetHeader>
-            <SheetTitle className="sr-only">Letter</SheetTitle>
-          </SheetHeader>
-          <div className="-mt-6 h-full overflow-y-auto">
-            <LetterPane letter={selected} compact />
-          </div>
-        </SheetContent>
-      </Sheet>
 
       <footer className="border-t border-border/70 px-4 py-4 text-center text-xs text-muted-foreground sm:px-6">
         Demo mailbox — no Gmail login required. Wire a real inbox later with Gmail
@@ -360,6 +295,99 @@ export function InboxDesk({ initial }: { initial: InboxSnapshot }) {
         </Link>
       </footer>
     </div>
+  )
+}
+
+function AsideCopy({
+  data,
+  filter,
+  counts,
+  onFilter,
+  onPref,
+}: {
+  data: InboxSnapshot
+  filter: Filter
+  counts: { knock: number; all: number; quiet: number }
+  onFilter: (value: Filter) => void
+  onPref: (patch: Partial<Prefs>) => void
+}) {
+  return (
+    <>
+      <p className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
+        Why this exists
+      </p>
+      <p className="mt-2 font-heading text-2xl leading-tight">
+        Check a knock, not an inbox.
+      </p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        Clerk reads new mail, throws away noise, and pings this desk — or
+        Telegram — with a summary and one button to the letter.
+      </p>
+
+      <div className="mt-5 grid gap-2">
+        {(
+          [
+            ["knock", `Knocks · ${counts.knock}`],
+            ["all", `Everything · ${counts.all}`],
+            ["quiet", `Filed quiet · ${counts.quiet}`],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onFilter(value)}
+            className={cn(
+              "rounded-lg px-3 py-2 text-left text-sm",
+              filter === value ? "bg-secondary" : "hover:bg-secondary/50"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <Separator className="my-4" />
+
+      <p className="mb-3 text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
+        What Clerk may knock about
+      </p>
+      <div className="grid gap-3 text-sm">
+        <PrefRow
+          label="Urgent"
+          hint="Travel, money, security, today"
+          checked={data.prefs.notifyUrgent}
+          onChange={(checked) => void onPref({ notifyUrgent: checked })}
+        />
+        <PrefRow
+          label="Needs you"
+          hint="Reviews, meetings, asks"
+          checked={data.prefs.notifyAction}
+          onChange={(checked) => void onPref({ notifyAction: checked })}
+        />
+        <PrefRow
+          label="FYI"
+          hint="Receipts, lab notes"
+          checked={data.prefs.notifyFyi}
+          onChange={(checked) => void onPref({ notifyFyi: checked })}
+        />
+        <PrefRow
+          label="Quiet / noise"
+          hint="Digests, LinkedIn, bots"
+          checked={data.prefs.notifyNoise}
+          onChange={(checked) => void onPref({ notifyNoise: checked })}
+        />
+        <PrefRow
+          label="Telegram copy"
+          hint={
+            data.telegramConfigured
+              ? "Live bot token detected"
+              : "Simulated in this demo"
+          }
+          checked={data.prefs.telegramEnabled}
+          onChange={(checked) => void onPref({ telegramEnabled: checked })}
+        />
+      </div>
+    </>
   )
 }
 
