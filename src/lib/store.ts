@@ -1,8 +1,9 @@
 import { gmailSearchUrl } from "@/lib/gmail"
 import { llmConfig, triageLetter } from "@/lib/llm"
+import { listMailAccounts } from "@/lib/mail-accounts"
 import { ARRIVAL_QUEUE, INITIAL_MAIL, type ScriptedMail } from "@/lib/mock-mail"
 import { shouldNotify, triage } from "@/lib/triage"
-import type { InboxSnapshot, Letter, Prefs, TelegramMessage } from "@/lib/types"
+import type { InboxSnapshot, Letter, Prefs, RawEmail, TelegramMessage } from "@/lib/types"
 import { deliverTelegram } from "@/lib/telegram"
 
 const defaultPrefs: Prefs = {
@@ -59,6 +60,11 @@ class MailboxStore {
     this.prefs = { ...defaultPrefs }
     this.telegram = []
     this.queue = cloneQueue()
+    if (listMailAccounts().length > 0) {
+      this.letters = []
+      this.queue = []
+      return
+    }
     this.letters = INITIAL_MAIL.map((script, index) => {
       const letter = toLetter(
         script,
@@ -85,6 +91,7 @@ class MailboxStore {
       ),
       llmConfigured: llmConfig().configured,
       llmModel: llmConfig().model,
+      mailboxCount: listMailAccounts().length,
       telegram: this.telegram,
     }
   }
@@ -137,6 +144,22 @@ class MailboxStore {
     this.applyNotify(letter)
     this.letters = [letter, ...this.letters]
     return { letter, exhausted: this.queue.length === 0 }
+  }
+
+  async ingest(raw: RawEmail) {
+    const result = await triageLetter(raw)
+    const letter = toLetter(
+      {
+        ...raw,
+        triage: result,
+      },
+      new Date().toISOString(),
+      this.nextId(),
+      result
+    )
+    this.applyNotify(letter)
+    this.letters = [letter, ...this.letters]
+    return letter
   }
 }
 

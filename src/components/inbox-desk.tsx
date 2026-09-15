@@ -393,7 +393,12 @@ function AsideCopy({
           ? `LLM (${data.llmModel}) on each new letter`
           : "local rules until you set LLM_API_KEY"}
         . Telegram:{" "}
-        {data.telegramConfigured ? "live Bot API" : "phone UI only"}.
+        {data.telegramConfigured ? "live Bot API" : "phone UI only"}
+        . IMAP:{" "}
+        {data.mailboxCount
+          ? `${data.mailboxCount} live account${data.mailboxCount === 1 ? "" : "s"}`
+          : "demo bag (set MAIL_1_USER)"}
+        .
       </p>
     </>
   )

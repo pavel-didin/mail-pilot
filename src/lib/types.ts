@@ -58,5 +58,6 @@ export type InboxSnapshot = {
   telegramConfigured: boolean
   llmConfigured: boolean
   llmModel: string
+  mailboxCount: number
   telegram: TelegramMessage[]
 }
