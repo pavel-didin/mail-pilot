@@ -114,9 +114,29 @@ LLM_MODEL=gpt-4o-mini
 
 `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `OPENAI_MODEL` work as aliases.
 
-Restart the process. On the desk, the left column should say **Summaries: LLM (model-name)**. Click **Pull next letter** — Clerk calls the API and uses that summary (if the API fails, it falls back to local rules).
+Restart the process. On the desk, the left column should say **Summaries: LLM (model-name)**. New IMAP letters (and demo “Pull next letter”) go through the model; if the API fails, Clerk falls back to local rules.
 
-Mail itself is still the demo bag until you add Gmail/IMAP. The LLM path is already live on each arrival.
+## Connect your mailboxes (IMAP)
+
+Gmail: Google Account → Security → 2-Step Verification → **App passwords**. Use that 16-character password, not your normal Gmail password. Enable IMAP in Gmail settings.
+
+In `.env` (as many as you need: `MAIL_1_`, `MAIL_2_`, … `MAIL_20_`):
+
+```bash
+MAIL_POLL_SECONDS=60
+
+MAIL_1_HOST=imap.gmail.com
+MAIL_1_PORT=993
+MAIL_1_USER=you@gmail.com
+MAIL_1_PASS=xxxx xxxx xxxx xxxx
+
+MAIL_2_HOST=imap.mail.ru
+MAIL_2_PORT=993
+MAIL_2_USER=you@mail.ru
+MAIL_2_PASS=your-mail-ru-password
+```
+
+If `MAIL_n_HOST` is omitted, Clerk infers it from the address (gmail, mail.ru, yandex, outlook). Rebuild/restart. Unread INBOX mail is fetched, triaged, marked seen, and knocked to the site / Telegram. The demo bag turns off as soon as `MAIL_1_USER` is set.
 
 ## Connect Telegram
 
@@ -136,4 +156,8 @@ Restart. Pull a letter that is not noise. You should get a Telegram message with
 
 ## Stack
 
-Next.js, TypeScript, Tailwind, shadcn/ui. Demo mail is in memory — a process restart empties it unless you click Reset after boot anyway.
+Next.js, TypeScript, Tailwind, shadcn/ui. Live IMAP mail is polled in-process. Restarting the Node process forgets the in-memory desk (mail on the server is unchanged).
+
+## License
+
+[MIT](LICENSE) © 2026 Pavel Didin
