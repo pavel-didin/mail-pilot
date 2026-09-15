@@ -387,6 +387,14 @@ function AsideCopy({
           onChange={(checked) => void onPref({ telegramEnabled: checked })}
         />
       </div>
+      <p className="mt-4 text-xs leading-5 text-muted-foreground">
+        Summaries:{" "}
+        {data.llmConfigured
+          ? `LLM (${data.llmModel}) on each new letter`
+          : "local rules until you set LLM_API_KEY"}
+        . Telegram:{" "}
+        {data.telegramConfigured ? "live Bot API" : "phone UI only"}.
+      </p>
     </>
   )
 }

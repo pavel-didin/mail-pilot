@@ -1,0 +1,7 @@
+services:
+  letterdesk:
+    build: .
+    ports:
+      - "43147:43147"
+    env_file: .env
+    restart: unless-stopped

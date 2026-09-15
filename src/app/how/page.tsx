@@ -55,13 +55,16 @@ export default function HowPage() {
       </div>
 
       <pre className="mt-8 overflow-x-auto rounded-xl bg-secondary p-4 text-xs leading-6">
-{`TELEGRAM_BOT_TOKEN=123:abc
+{`NEXT_PUBLIC_APP_URL=https://your-host
+TELEGRAM_BOT_TOKEN=123:abc
 TELEGRAM_CHAT_ID=your-chat-id
-NEXT_PUBLIC_APP_URL=https://your-host`}
+LLM_API_KEY=sk-...
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini`}
       </pre>
       <p className="mt-3 text-sm text-muted-foreground">
-        With those set, Clerk will try a real Telegram send on every knock. This
-        demo stays simulated until then.
+        With Telegram set, Clerk sends a real knock. With an LLM key, each new
+        letter is summarized by the model; otherwise Clerk uses local rules.
       </p>
 
       <Link href="/" className={cn(buttonVariants(), "mt-8")}>

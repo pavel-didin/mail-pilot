@@ -56,5 +56,7 @@ export type InboxSnapshot = {
   queueRemaining: number
   prefs: Prefs
   telegramConfigured: boolean
+  llmConfigured: boolean
+  llmModel: string
   telegram: TelegramMessage[]
 }

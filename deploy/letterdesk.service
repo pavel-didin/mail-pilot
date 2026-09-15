@@ -1,0 +1,16 @@
+[Unit]
+Description=Letterdesk mail clerk
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/mail-pilot
+EnvironmentFile=/opt/mail-pilot/.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=3
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

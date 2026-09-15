@@ -1,4 +1,5 @@
 import { gmailSearchUrl } from "@/lib/gmail"
+import { llmConfig, triageLetter } from "@/lib/llm"
 import { ARRIVAL_QUEUE, INITIAL_MAIL, type ScriptedMail } from "@/lib/mock-mail"
 import { shouldNotify, triage } from "@/lib/triage"
 import type { InboxSnapshot, Letter, Prefs, TelegramMessage } from "@/lib/types"
@@ -16,8 +17,12 @@ function cloneQueue() {
   return ARRIVAL_QUEUE.map((item) => ({ ...item, triage: { ...item.triage } }))
 }
 
-function toLetter(script: ScriptedMail, receivedAt: string, id: string): Letter {
-  const result = script.triage ?? triage(script)
+function toLetter(
+  script: ScriptedMail,
+  receivedAt: string,
+  id: string,
+  result: ReturnType<typeof triage>
+): Letter {
   return {
     id,
     fromName: script.fromName,
@@ -58,7 +63,8 @@ class MailboxStore {
       const letter = toLetter(
         script,
         new Date(now - (INITIAL_MAIL.length - index) * 36 * 60_000).toISOString(),
-        this.nextId()
+        this.nextId(),
+        script.triage ?? triage(script)
       )
       return this.applyNotify(letter)
     }).reverse()
@@ -77,6 +83,8 @@ class MailboxStore {
       telegramConfigured: Boolean(
         process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID
       ),
+      llmConfigured: llmConfig().configured,
+      llmModel: llmConfig().model,
       telegram: this.telegram,
     }
   }
@@ -121,10 +129,11 @@ class MailboxStore {
     return letter
   }
 
-  arrive() {
+  async arrive() {
     const script = this.queue.shift()
     if (!script) return { letter: null as Letter | null, exhausted: true }
-    const letter = toLetter(script, new Date().toISOString(), this.nextId())
+    const result = await triageLetter(script)
+    const letter = toLetter(script, new Date().toISOString(), this.nextId(), result)
     this.applyNotify(letter)
     this.letters = [letter, ...this.letters]
     return { letter, exhausted: this.queue.length === 0 }
